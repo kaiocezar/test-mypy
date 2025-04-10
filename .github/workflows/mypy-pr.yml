@@ -59,3 +59,14 @@ jobs:
           else
             echo "No Python files changed."
           fi
+      - name: Run ruff on changed files
+      
+        run: |
+          source .venv/bin/activate
+          FILES="${{ steps.changed-files.outputs.FILES }}"
+          if [ -n "$FILES" ]; then
+            echo "Running ruff on: $FILES"
+            ruff check $FILES
+          else
+            echo "No Python files changed."
+          fi
