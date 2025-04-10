@@ -10,8 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout code with full history
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: false
+          ref: ${{ github.head_ref }}
+
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -54,3 +59,8 @@ jobs:
           else
             echo "No Python files changed."
           fi
+      
+      - name: Run ruff with reviewdog
+        run: |
+          ruff check . \
+            | reviewdog -efm="%f:%l:%c: %m" -name="ruff" -reporter=github-pr-review -filter-mode=diff_context
