@@ -4,3 +4,6 @@ def greeting(name: str) -> str:
 
 def bad_greeting(name: str) -> str:
     return 'Hello ' * name  # Unsupported operand types for * ("str" and "str")
+
+
+print(bad_greeting(123))
