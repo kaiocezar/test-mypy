@@ -1,0 +1,56 @@
+name: Run mypy on PR changes
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  mypy-check:
+    name: Mypy on PR diff
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up cache for dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Create virtual environment and install dependencies
+        run: |
+          uv venv
+          source .venv/bin/activate
+          uv pip install -r requirements.txt || true
+          uv pip install mypy
+
+      - name: Get list of changed Python files
+        id: changed-files
+        run: |
+          echo "FILES=$(git diff --name-only origin/master...HEAD -- '*.py' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+
+      - name: Run mypy on changed files
+        run: |
+          source .venv/bin/activate
+          FILES="${{ steps.changed-files.outputs.FILES }}"
+          if [ -n "$FILES" ]; then
+            echo "Running mypy on: $FILES"
+            mypy $FILES
+          else
+            echo "No Python files changed."
+          fi
